@@ -1,0 +1,17 @@
+<template>
+    <div class="contant">
+       
+        <p class="slds-text-body_small">MSRP: {car.MSRP__c}</p>
+        <p class="slds-text-body_small">Category: {car.Category__c}</p>
+        <img src={car.Picture_URL__c} alt="Car picture" class="slds-align_absolute-center" />
+        <div>
+            <p class="title slds-align_absolute-center">{car.Name}</p>
+            <p class="slds-align_absolute-center">
+                MSRP:
+                <lightning-formatted-number value={car.MSRP__c} class="price"
+                format-style="currency" currency-code="USD" maximum-fraction-digits="0" ></lightning-formatted-number>
+            </p>
+        </div>
+    </div>
+        
+</template>
