@@ -1,14 +1,16 @@
 <template>
-     <lightning-card title="Car Tile List" icon-name='standard:calibration'>
-          <div class="slds-m-horizontal_medium">
-              <template if:true={cars}>
-                  <template for:each={cars} for:item="car">
-                      <c-car-tile key={car.Id} car={car}></c-car-tile>
-                  </template>
-              </template>
-              <template if:true={error}>
-                  <p class="slds-text-color_error">{error}</p>
-              </template>
-          </div>
-     </lightning-card>
+    <lightning-card title="Cars Available" icon-name="standard:account">
+        <div class="slds-p-around_medium wrapper">
+            <template if:true={cars.length}>
+                <div class="content">
+                    <template for:each={cars} for:item="car">
+                       <c-car-tile key={car.Id} car={car} onselected={handleCarSelected}></c-car-tile> 
+                    </template>
+                </div>
+            </template>
+            <template if:false={cars.length}>
+                <c-placeholder message="There are no car matching your current selection"></c-placeholder>
+            </template>
+        </div>
+    </lightning-card>
 </template>

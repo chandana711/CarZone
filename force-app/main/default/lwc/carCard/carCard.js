@@ -1,58 +1,81 @@
-import { LightningElement } from 'lwc';
-import {getFieldValue} from 'lightning/uiRecordApi';
+import { LightningElement, wire } from 'lwc';
 
+//Navigation
+import {NavigationMixin} from 'lightning/navigation'
 
-//car__c schema
-//import CAR_OBJECT from '@salesforce/schema/Car__c';
-import NAME_FIELD from '@salesforce/schema/Car__c.Name';
-import CATEGORY_FIELD from '@salesforce/schema/Car__c.Category__c';
-import MAKE_FIELD from '@salesforce/schema/Car__c.Make__c';
-import MSRP_FIELD from '@salesforce/schema/Car__c.MSRP__c';
-import PICTURE_URL_FIELD from '@salesforce/schema/Car__c.Picture_URL__c';
-import FULE_FIELD from '@salesforce/schema/Car__c.Fuel_Type__c';
-import SEAT_FIELD from '@salesforce/schema/Car__c.seats__c';
-import CONTROL_FIELD from '@salesforce/schema/Car__c.Control__c';
+//Car__c Schema
+import CAR_OBJECT from '@salesforce/schema/Car__c'
+import NAME_FIELD from '@salesforce/schema/Car__c.Name'
+import PICTURE_URL_FIELD from '@salesforce/schema/Car__c.Picture_URL__c'
+import CATEGORY_FIELD from '@salesforce/schema/Car__c.Category__c'
+import MAKE_FIELD from '@salesforce/schema/Car__c.Make__c'
+import MSRP_FIELD from '@salesforce/schema/Car__c.MSRP__c'
+import FUEL_FIELD from '@salesforce/schema/Car__c.Fuel_Type__c'
+import SEATS_FIELD from '@salesforce/schema/Car__c.seats__c'
+import CONTROL_FIELD from '@salesforce/schema/Car__c.Control__c'
+// getFieldValue function is used to extract field values
+import {getFieldValue} from 'lightning/uiRecordApi'
 
+//lightning message service
+import {subscribe, MessageContext, unsubscribe} from 'lightning/messageService'
+import CAR_SELECTED_MESSAGE from '@salesforce/messageChannel/CarSelected__c'
 
+export default class CarCard extends NavigationMixin(LightningElement) {
 
-export default class CarCard extends LightningElement {
+    /// load content for LMS
+    @wire(MessageContext)
+    messageContext
 
-   // carObject = CAR_OBJECT;
-   // nameField = NAME_FIELD;
-    categoryField = CATEGORY_FIELD;
-    makeField = MAKE_FIELD;
-    msrpField = MSRP_FIELD;
-   // pictureUrlField = PICTURE_URL_FIELD;
-    fuelTypeField = FULE_FIELD;
-    seatsField = SEAT_FIELD;
-    controlField = CONTROL_FIELD;
-    
-    //Id of the car record to display
-    recordId = 'a00dL00003W4HslQAF';
+    //exposing fields to make them available in the template
+    categoryField = CATEGORY_FIELD
+    makeField = MAKE_FIELD 
+    msrpField = MSRP_FIELD
+    fuelField = FUEL_FIELD
+    seatsField = SEATS_FIELD
+    controlField = CONTROL_FIELD
 
-    //Car fields displayed with specific format
+    //Id of Car__c to display data
+    recordId
+
+    // car fields displayed with specific format
     carName
     carPictureUrl
 
-    handleRecordLoad(event){
-        console.log('Car Record Loaded');
-        const {records} = event.detail;
-        const recordData = records[this.recordId];
-        console.log('Record Data: ', recordData);
-        //this.carName = getFieldValue(recordData, NAME_FIELD);
-       // this.carPictureUrl = getFieldValue(recordData, PICTURE_URL_FIELD);
-       this.carName = recordData.fields.Name.value;
-         this.carPictureUrl = recordData.fields.Picture_URL__c.value;
-        console.log('Car Name: ', this.carName);
-        console.log('Car Picture URL: ', this.carPictureUrl);
+    //subscription reference for carSelected
+    carSelectionSubscription 
+
+    handleRecordLoaded(event){
+        const {records} = event.detail
+        const recordData = records[this.recordId]
+        this.carName = getFieldValue(recordData, NAME_FIELD)
+        this.carPictureUrl = getFieldValue(recordData, PICTURE_URL_FIELD)
     }
 
-    handleSuccess(){
-        console.log('Car Record fetched Successfully');
+    connectedCallback(){
+        this.subscribeHandler()
     }
 
-    handleError(event){
-        console.error('Error fetching Car Record', event.detail);
+    subscribeHandler(){
+        this.carSelectionSubscription = subscribe(this.messageContext, CAR_SELECTED_MESSAGE, (message)=>this.handleCarSelected(message))
+    }
+    handleCarSelected(message){
+        this.recordId = message.carId
     }
 
+    disconnectedCallback(){
+        unsubscribe(this.carSelectionSubscription)
+        this.carSelectionSubscription = null
+    }
+
+    /**navigate to record page */
+    handleNavigateToRecord(){
+        this[NavigationMixin.Navigate]({
+            type:'standard__recordPage',
+            attributes:{
+                recordId:this.recordId,
+                objectApiName:CAR_OBJECT.objectApiName,
+                actionName:'view'
+            }
+        })
+    }
 }
